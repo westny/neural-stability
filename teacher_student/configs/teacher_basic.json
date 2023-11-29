@@ -1,0 +1,9 @@
+{
+    "solver_order": 1,
+    "complex_poles": true,
+    "exclusion_order": 0,
+    "eps": -2e-1,
+    "n_hidden": 128,
+    "n_layers": 2,
+    "stochastic_inp": true
+}

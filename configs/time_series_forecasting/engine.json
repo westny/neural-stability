@@ -1,0 +1,44 @@
+{
+  "experiment_name": "Combustion Engine Dynamics",
+  "task": "MTS",
+  "dataset": "engine",
+  "model": {
+    "class": "MultiRegressor",
+    "module": "mts_forecasting.models.dynamic",
+    "n_latent": 32,
+    "n_inputs": 7,
+    "n_outputs": 1,
+    "n_hidden": 128,
+    "n_layers": 2,
+    "step_size": 0.05,
+    "ode_solver": "midpoint",
+    "activation": "swish",
+    "stability_init": false
+  },
+  "litmodule": {
+    "class": "LitModel",
+    "module": "mts_forecasting.base_mts"
+  },
+
+  "datamodule": {
+    "class": "LitDataModule",
+    "module": "mts_forecasting.dm_engine",
+    "batch_size": 512,
+    "segment_len": 800,
+    "sequence_len": 400,
+    "sample_time": 0.05,
+    "data_seed": 42,
+    "root": "data/engine/",
+    "name": "wltp_NF.csv"
+  },
+
+  "training": {
+    "data": "engine",
+    "epochs": 200,
+    "lr": 1e-4,
+    "beta": 1.0,
+    "decay": 0.999,
+    "sample_time": 0.05,
+    "clip": 1.0
+  }
+}

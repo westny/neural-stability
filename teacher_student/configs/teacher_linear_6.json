@@ -1,0 +1,5 @@
+{
+    "solver_order": 3,
+    "complex_poles": true,
+    "exclusion_order": 1
+}

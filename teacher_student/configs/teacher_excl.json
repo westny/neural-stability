@@ -1,0 +1,7 @@
+{
+    "solver_order": 5,
+    "complex_poles": true,
+    "exclusion_order": 4,
+    "n_hidden": 128,
+    "n_layers": 2
+}

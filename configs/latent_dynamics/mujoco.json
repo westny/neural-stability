@@ -1,0 +1,43 @@
+{
+  "experiment_name": "Latent Dynamics - MuJoCo Room",
+  "task": "LD",
+  "dataset": "mujoco",
+  "model": {
+    "class": "LatentDynamics",
+    "module": "latent_dynamics.models.latent_dynamics",
+    "n_latent": 128,
+    "n_inputs": 0,
+    "n_hidden": 136,
+    "n_layers": 2,
+    "step_size": 0.1,
+    "ode_solver": "midpoint",
+    "activation": "swish",
+    "stability_init": false,
+    "dropout": 0.0
+  },
+  "litmodule": {
+    "class": "LitModel",
+    "module": "latent_dynamics.base_latent"
+  },
+
+  "datamodule": {
+    "class": "LitDataModule",
+    "module": "latent_dynamics.dm_latent",
+    "batch_size": 32,
+    "inp_len": 10,
+    "trg_len": 60,
+    "test_trg_len": 240,
+    "sample_time": 0.1,
+    "data_seed": 42,
+    "root": "data/",
+    "name": "mujoco"
+  },
+
+  "training": {
+    "data": "mujoco",
+    "epochs": 100,
+    "lr": 1e-4,
+    "sample_time": 0.1,
+    "clip": 0
+  }
+}

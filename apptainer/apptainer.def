@@ -1,0 +1,59 @@
+Bootstrap: docker
+From: ubuntu:22.04
+
+%environment
+
+export PATH="/opt/conda/bin:$PATH"
+export PYTHONNOUSERSITE=1
+
+%post
+
+# Install necessary system packages
+apt-get update && apt-get install -y --no-install-recommends \
+    git \
+    nano \
+    wget \
+    curl \
+    ca-certificates && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+# Install Miniconda package manager
+wget -q -P /tmp https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh --no-check-certificate && \
+    /bin/bash /tmp/Miniconda3-latest-Linux-x86_64.sh -b -p /opt/conda && \
+    rm /tmp/Miniconda3-latest-Linux-x86_64.sh
+
+# Initialize conda for shell interaction
+. /opt/conda/etc/profile.d/conda.sh
+
+# Update conda base environment
+conda update -n base -c defaults conda -y
+
+# Install Python 3.11 in the base environment
+conda install -y python=3.11
+
+# Install pip in the base environment
+conda install -y pip
+
+# Install PyTorch
+conda install -y pytorch torchvision pytorch-cuda=12.1 -c pytorch -c nvidia
+
+# Install other dependencies
+conda install -y \
+    -c conda-forge \
+    lightning \
+    wandb \
+    scikit-learn \
+    tqdm \
+    h5py \
+    matplotlib \
+    pandas \
+    openpyxl
+
+# Install using pip
+/opt/conda/bin/pip install tfrecord
+
+# Clean up conda packages to reduce the container size
+conda clean -a --yes
+
+

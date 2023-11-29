@@ -1,0 +1,44 @@
+{
+  "experiment_name": "Air Quality Forecasting",
+  "task": "MTS",
+  "dataset": "quality",
+  "model": {
+    "class": "MultiRegressor",
+    "module": "mts_forecasting.models.dynamic",
+    "n_latent": 32,
+    "n_inputs": 8,
+    "n_outputs": 4,
+    "n_hidden": 128,
+    "n_layers": 2,
+    "step_size": 1.0,
+    "ode_solver": "midpoint",
+    "activation": "swish",
+    "stability_init": false
+  },
+  "litmodule": {
+    "class": "LitModel",
+    "module": "mts_forecasting.base_mts"
+  },
+
+  "datamodule": {
+    "class": "LitDataModule",
+    "module": "mts_forecasting.dm_quality",
+    "batch_size": 512,
+    "segment_len": 600,
+    "sequence_len": 300,
+    "sample_time": 1.0,
+    "data_seed": 42,
+    "root": "data/quality/",
+    "name": "AirQualityUCI.xlsx"
+  },
+
+  "training": {
+    "data": "quality",
+    "epochs": 100,
+    "lr": 1e-4,
+    "beta": 1.0,
+    "decay": 0.95,
+    "sample_time": 1.0,
+    "clip": 1.0
+  }
+}

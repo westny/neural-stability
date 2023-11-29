@@ -1,0 +1,42 @@
+{
+  "experiment_name": "Sequential CIFAR-10",
+  "task": "ImgCF",
+  "dataset": "cifar10",
+  "model": {
+    "class": "PixelLevelClassifier",
+    "module": "sequential_vision.model",
+    "n_latent": 128,
+    "n_inputs": 3,
+    "n_encodings": 128,
+    "n_outputs": 10,
+    "n_hidden": 256,
+    "n_layers": 2,
+    "step_size": 0.1,
+    "ode_solver": "midpoint",
+    "activation": "elu",
+    "stability_init": false
+  },
+  "litmodule": {
+    "class": "LitModel",
+    "module": "sequential_vision.base_seqvision"
+  },
+
+  "datamodule": {
+    "class": "LitDataModule",
+    "module": "sequential_vision.dm_seqvision",
+    "batch_size": 512,
+    "pixel_wise": true,
+    "augment": true,
+    "grey_scale": false,
+    "root": "data/",
+    "name": "cifar10"
+  },
+
+  "training": {
+    "data": "cifar10",
+    "epochs": 100,
+    "lr": 1e-3,
+    "sample_time": 0.1,
+    "clip": 0.0
+  }
+}

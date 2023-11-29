@@ -1,0 +1,58 @@
+{
+  "experiment_name": "Teacher-Student Regression - Exclusive",
+  "task": "TS",
+  "dataset": "inclusive",
+  "model": {
+    "class": "Student",
+    "module": "teacher_student.models.student",
+    "n_states": 2,
+    "n_inputs": 1,
+    "n_hidden": 32,
+    "n_layers": 1,
+    "ode_solver": "midpoint",
+    "step_size": 0.1,
+    "stability_init": false,
+    "complex_poles": true,
+    "activation": "elu"
+  },
+  "litmodule": {
+    "class": "LitModel",
+    "module": "teacher_student.base_ts"
+  },
+
+  "datamodule": {
+    "class": "LitDataModule",
+    "module": "teacher_student.dm_ts",
+    "batch_size": 20,
+    "duration": 30,
+    "sequence_len": 10,
+    "sample_time": 0.1,
+    "batch_time": 10,
+    "control_signal": "pwm_sine",
+    "test_signal": "pwm_cosine",
+    "data_seed": 42,
+    "evaluate": true,
+    "root": "data/teacher_student/",
+    "name": "nonlinear",
+    "teacher": {
+      "n_states": 2,
+      "n_inputs": 1,
+      "n_hidden": 128,
+      "n_layers": 2,
+      "ode_solver": "dopri5",
+      "solver_order": 5,
+      "exclusion_order": 4,
+      "eps": -0.2,
+      "stability_init": true,
+      "complex_poles": true
+    }
+  },
+
+  "training": {
+    "data": "teacher_student",
+    "epochs": 100,
+    "lr": 1e-4,
+    "sample_time": 0.1,
+    "clip": 1.0
+  }
+}

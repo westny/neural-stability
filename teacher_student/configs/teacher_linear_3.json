@@ -1,0 +1,6 @@
+{
+    "solver_order": 2,
+    "complex_poles": true,
+    "exclusion_order": 1,
+    "eps": -1e-1
+}

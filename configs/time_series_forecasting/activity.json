@@ -1,0 +1,44 @@
+{
+  "experiment_name": "Human Activity Forecasting",
+  "task": "MTS",
+  "dataset": "activity",
+  "model": {
+    "class": "MultiRegressor",
+    "module": "mts_forecasting.models.dynamic",
+    "n_latent": 32,
+    "n_inputs": 9,
+    "n_outputs": 3,
+    "n_hidden": 128,
+    "n_layers": 2,
+    "step_size": 0.02,
+    "ode_solver": "midpoint",
+    "activation": "swish",
+    "stability_init": false
+  },
+  "litmodule": {
+    "class": "LitModel",
+    "module": "mts_forecasting.base_mts"
+  },
+
+  "datamodule": {
+    "class": "LitDataModule",
+    "module": "mts_forecasting.dm_activity",
+    "batch_size": 512,
+    "sequence_len": 10,
+    "sample_time": 0.02,
+    "data_seed": 42,
+    "evaluate": true,
+    "root": "data/activity/",
+    "name": "data.csv"
+  },
+
+  "training": {
+    "data": "activity",
+    "epochs": 100,
+    "lr": 1e-4,
+    "beta": 1.0,
+    "decay": 0.999,
+    "sample_time": 0.02,
+    "clip": 1.0
+  }
+}
