@@ -28,13 +28,7 @@ class LitModel(pl.LightningModule):
         return target.shape[0:2]
 
     def training_step(self, data, batch_idx) -> float:
-        if self.dataset == "engine":
-            if self.current_epoch < self.max_epochs // 2:
-                inputs, target = data['a']
-            else:
-                inputs, target = data['b']
-        else:
-            inputs, target = data
+        inputs, target = data
 
         int_steps, batch_size = self.data_info(target)
         pred, _, q = self.model(inputs, int_steps, self.sample_time, self.training)

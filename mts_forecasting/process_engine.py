@@ -40,26 +40,17 @@ def process_data(file="wltp_NF.csv", root="./data/engine", download=True, keep=-
         else:
             raise FileNotFoundError(f'{root}/' + file)
 
-    y = {}
-
     # Load data from engine
     df = pd.read_csv(f'{root}/' + file)
 
     # index by signal_csv keys
     df = df.rename(columns=signals_csv)
 
-    # store values in dict
-    for key in signals_csv.values():
-        z = torch.from_numpy(df[key].values).float()
-        y[key] = z[:keep] if keep > 0 else z
-
-    t = None
-
     # basic configuration
     config = Config(measurements=['y_W_af', 'y_alpha_th', 'y_omega_e', 'y_p_amb', 'y_p_im', 'y_u_wg', 'y_wfc'],
                     sensor='y_p_ic')
 
-    return y, t, config
+    return df, config
 
 
 def download_file(url, filename):

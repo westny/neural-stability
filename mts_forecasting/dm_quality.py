@@ -1,12 +1,12 @@
-import os
 import torch
 import numpy as np
 import lightning.pytorch as pl
 
 from argparse import ArgumentParser
-from torch.utils.data import Dataset, DataLoader
-from mts_forecasting.process_quality import process_data
+from torch.utils.data import DataLoader
 from sklearn.model_selection import train_test_split
+from mts_forecasting.dataset import MTSDataset
+from mts_forecasting.process_quality import process_data
 
 
 class LitDataModule(pl.LightningDataModule):
@@ -65,13 +65,13 @@ class LitDataModule(pl.LightningDataModule):
         train_segments, test_segments = train_test_split(segments, test_size=0.2, random_state=seed)
 
         # Step 3: Sub-segment the data into n-length samples with overlap
-        def create_subsegments(segments, n):
+        def create_subsegments(segments, n, every_ith=1):
             subsegments = []
             for segment in segments:
-                subsegments.extend([segment[i:i + n] for i in range(len(segment) - n + 1)])
+                subsegments.extend([segment[i:i + n] for i in range(0, len(segment) - n + 1, every_ith)])
             return subsegments
 
-        train_samples = create_subsegments(train_segments, n)
+        train_samples = create_subsegments(train_segments, n, every_ith=10)
         test_samples = create_subsegments(test_segments, n)
 
         # Step 4: Calculate mean and std on train set
@@ -131,26 +131,3 @@ class LitDataModule(pl.LightningDataModule):
                           pin_memory=self.pin_memory,
                           persistent_workers=self.persistent,
                           collate_fn=MTSDataset.collate_fn)
-
-
-class MTSDataset(Dataset):
-    def __init__(self, inp_data, trg_data):
-        self.input = inp_data
-        self.trg_data = trg_data
-        self.inp_idx = torch.arange(len(inp_data))
-        print(inp_data.shape)
-
-    @staticmethod
-    def collate_fn(batch):
-        x = torch.stack([b[0] for b in batch], dim=1)
-        y = torch.stack([b[1] for b in batch], dim=1)
-        return x, y
-
-    def __len__(self):
-        return len(self.inp_idx)
-
-    def __getitem__(self, idx):
-        s = self.inp_idx[idx]
-        x = self.input[s]
-        y = self.trg_data[s]
-        return x, y

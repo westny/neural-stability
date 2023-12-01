@@ -1,11 +1,13 @@
 import os
 import torch
+import numpy as np
 import pandas as pd
 import lightning.pytorch as pl
 
-from typing import List
 from argparse import ArgumentParser
-from torch.utils.data import Dataset, DataLoader
+from torch.utils.data import DataLoader
+from sklearn.model_selection import train_test_split
+from mts_forecasting.dataset import MTSDataset
 from mts_forecasting.process_activity import process_activity_data
 
 
@@ -26,40 +28,73 @@ class LitDataModule(pl.LightningDataModule):
 
         # check if the data.csv file exists
         if not os.path.exists(path):
-            # check if folder exists, otherwise create it
-            # if not os.path.exists(config["root"]):
-            #     os.mkdir(config["root"])
             process_activity_data(config["root"])
         df = pd.read_csv(path)
-        train_ids, val_ids, test_ids = self.process_data(df, self.seed)
 
-        self.train = ActivityDataset(df, train_ids, self.seq_len)
-        self.val = ActivityDataset(df, val_ids, self.seq_len)
-        self.test = ActivityDataset(df, test_ids, self.seq_len)
+        processed_data = self.process_data(df, self.seq_len, self.seed)
+
+        self.train = MTSDataset(processed_data["train_input"], processed_data["train_target"])
+        self.val = MTSDataset(processed_data["val_input"], processed_data["val_target"])
+        self.test = MTSDataset(processed_data["test_input"], processed_data["test_target"])
 
     @staticmethod
-    def process_data(df, seed=0):
+    def process_data(df, seq_len, seed=0):
         """
         Process the data with a specific RNG for the splitting process.
         """
+
+        # note that these are the indices after dropping the record_id column
+        input_idx = [0, 1, 2, 3, 4, 5, 9, 10, 11]  # Both ankles + belt
+        output_idx = [6, 7, 8]  # chest
+
         # get all unique record_ids
         record_ids = df.record_id.unique()
 
-        # shuffle the ids based on the data seed
-        rng = torch.Generator().manual_seed(seed)
-        record_ids = record_ids[torch.randperm(len(record_ids), generator=rng)]
+        train_ids, test_ids = train_test_split(record_ids, test_size=0.2, random_state=seed)
+        train_ids, val_ids = train_test_split(train_ids, test_size=0.2, random_state=seed)
 
-        # split the record_ids into train, val and test
-        train_ids = record_ids[:int(len(record_ids) * 0.6)]
-        val_ids = record_ids[int(len(record_ids) * 0.6):int(len(record_ids) * 0.8)]
-        test_ids = record_ids[int(len(record_ids) * 0.8):]
+        train_df = df[df.record_id.isin(train_ids)]
+        val_df = df[df.record_id.isin(val_ids)]
+        test_df = df[df.record_id.isin(test_ids)]
 
-        return train_ids, val_ids, test_ids
+        # breakpoint()
+
+        def create_segments(df, r_ids):
+            indices = []
+            for r_id in r_ids:
+                indices += df.index[df.record_id == r_id].tolist()[:-seq_len]
+
+            # Drop the 'record_id' column
+            df_dropped = df.drop(columns=["record_id"])
+
+            def get_single_segment(idx):
+                segment = df_dropped.loc[idx:idx+seq_len-1].to_numpy()
+                return segment, len(segment)
+
+            segments = [segment for idx in indices for segment, ln in [get_single_segment(idx)] if ln == seq_len]
+
+            stacked_data = np.stack(segments)
+            inp = torch.from_numpy(stacked_data[..., input_idx]).float()
+            out = torch.from_numpy(stacked_data[..., output_idx]).float()
+            return inp, out
+
+        train_inp, train_out = create_segments(train_df, train_ids)
+        val_inp, val_out = create_segments(val_df, val_ids)
+        test_inp, test_out = create_segments(test_df, test_ids)
+
+        return {
+            "train_input": train_inp,
+            "train_target": train_out,
+            "val_input": val_inp,
+            "val_target": val_out,
+            "test_input": test_inp,
+            "test_target": test_out
+        }
 
     def train_dataloader(self):
         return DataLoader(self.train,
                           shuffle=True,
-                          collate_fn=ActivityDataset.collate_fn,
+                          collate_fn=MTSDataset.collate_fn,
                           batch_size=self.batch_size,
                           num_workers=self.n_workers,
                           pin_memory=self.pin_memory,
@@ -68,7 +103,7 @@ class LitDataModule(pl.LightningDataModule):
 
     def val_dataloader(self):
         return DataLoader(self.val if not self.evaluate else self.test,
-                          collate_fn=ActivityDataset.collate_fn,
+                          collate_fn=MTSDataset.collate_fn,
                           batch_size=self.batch_size,
                           num_workers=self.n_workers,
                           pin_memory=self.pin_memory,
@@ -77,61 +112,6 @@ class LitDataModule(pl.LightningDataModule):
 
     def test_dataloader(self):
         return DataLoader(self.test,
-                          collate_fn=ActivityDataset.collate_fn,
+                          collate_fn=MTSDataset.collate_fn,
                           batch_size=self.batch_size,
                           num_workers=self.n_workers)
-
-
-class ActivityDataset(Dataset):
-    def __init__(self,
-                 df: pd.DataFrame,
-                 r_ids: List[str],
-                 inp_len: int = 100,
-                 out_len: int = 20):
-
-        self.record_ids = r_ids
-        self.inp_len = inp_len
-        self.out_len = out_len
-
-        self.input_idx = [1, 2, 3, 4, 5, 6, 10, 11, 12]  # Ankles + belt
-        self.output_idx = [7, 8, 9]  # chest
-
-        # filter out the current record_ids
-        self.df = df[df.record_id.isin(r_ids)]
-
-        # Get the number of rows for each record_id
-        self.n_rows = {record_id: len(self.df[self.df.record_id == record_id]) for record_id in self.record_ids}
-
-        # Get all the possible starting indices for each record_id
-        self.start_indices = {record_id: torch.arange(self.n_rows[record_id] - inp_len)
-                              for record_id in self.record_ids}
-
-        # map all the starting indices to a unique label for data indexing
-        self.start_idx_to_label = {}
-        j = 0
-        for record_id in self.record_ids:
-            for i in range(len(self.start_indices[record_id])):
-                self.start_idx_to_label[j] = (record_id, i)
-                j += 1
-
-    @staticmethod
-    def collate_fn(batch):
-        x = torch.stack([b[0] for b in batch], dim=1)
-        y = torch.stack([b[1] for b in batch], dim=1)
-        return x, y
-
-    def __len__(self):
-        return len(self.start_idx_to_label)
-
-    def __getitem__(self, idx):
-        r_id, start_idx = self.start_idx_to_label[idx]
-
-        # get x as all the columns x1, y1, y2, .... , x4, y4, z4
-        df = self.df[self.df.record_id == r_id]
-
-        x = df.iloc[start_idx:start_idx + self.inp_len].iloc[:, self.input_idx].values
-        y = df.iloc[start_idx:start_idx + self.inp_len].iloc[:, self.output_idx].values
-
-        x = torch.from_numpy(x).float()
-        y = torch.from_numpy(y).float()
-        return x, y

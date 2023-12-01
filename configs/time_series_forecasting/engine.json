@@ -34,7 +34,7 @@
 
   "training": {
     "data": "engine",
-    "epochs": 200,
+    "epochs": 100,
     "lr": 1e-4,
     "beta": 1.0,
     "decay": 0.999,
