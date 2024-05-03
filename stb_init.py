@@ -311,7 +311,7 @@ def init_strategy(seq_module: Sequential,
         pole = poles[j]
         if pole.imag.abs() > 0:
 
-            pole = - pole ** (1 / n_layers)
+            pole = (-1 * pole) ** (1 / n_layers)
 
             mu = pole.real
             omega = pole.imag

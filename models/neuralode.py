@@ -1,3 +1,4 @@
+import warnings
 import torch
 import torch.nn as nn
 from torch import func
@@ -105,10 +106,21 @@ class NonLinearNet(nn.Module):
                     layers.append(nn.GELU(approximate="tanh"))
                 case "relu":
                     layers.append(nn.ReLU(inplace=True))
+                case "lrelu":
+                    layers.append(nn.LeakyReLU(inplace=True))
+                case "selu":
+                    layers.append(nn.SELU(inplace=True))
+                case "softplus":
+                    layers.append(nn.Softplus())
+                case "tanh":
+                    layers.append(nn.Tanh())
+                case "sigmoid":
+                    layers.append(nn.Sigmoid())
                 case "none":
                     # Will return a linear model
                     pass
                 case _:
+                    warnings.warn(f"Unknown activation function: {nonlinearity}. Using ELU.")
                     layers.append(nn.ELU(inplace=True))
 
             return layers
