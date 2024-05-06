@@ -9,8 +9,6 @@ ______________________________________________________________________
 [![pytorch](https://img.shields.io/badge/PyTorch-2.2-blue.svg)](https://pytorch.org/)
 [![license](https://img.shields.io/badge/License-Apache%202.0-2F2F2F.svg)](LICENSE)
 <br>
-[![Docker Status](https://github.com/westny/neural-stability/actions/workflows/docker-image.yml/badge.svg)](.github/workflows/docker-image.yml)
-[![Apptainer Status](https://github.com/westny/neural-stability/actions/workflows/apptainer-image.yml/badge.svg)](.github/workflows/apptainer-image.yml)
 [![Conda Status](https://github.com/westny/neural-stability/actions/workflows/conda.yml/badge.svg)](.github/workflows/conda.yml)
 [![Linting Status](https://github.com/westny/neural-stability/actions/workflows/mypy.yml/badge.svg)](.github/workflows/mypy.yml)
 
