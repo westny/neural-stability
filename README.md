@@ -1,5 +1,5 @@
 <div align="center">
-<img alt="SII logo" src="img/sii.png" width="800px" style="max-width: 100%;">
+<img alt="SII logo" src=https://github.com/westny/neural-stability/assets/60364134/1efee971-394e-4e1d-aec0-d273c8f16ae5 width="800px" style="max-width: 100%;">
 
 
 ______________________________________________________________________
@@ -139,13 +139,13 @@ In `stb_init.py` the initialization technique implementation as outlined in the 
 In its current form, the function that initializes the parameters of the provided model assumes the neural network is implemented using the `Sequential` module form `torch.nn`.
 
 In `neuralode.py`, you will find the implementations of a template neural network. 
-This is also where you will find functions used to perform the Jacobian calculations of the to estimate model eigenvalues.
+This is also where you will find functions used to perform the Jacobian calculations to estimate model eigenvalues.
 
 [<img alt="Lightning logo" src=https://github.com/westny/dronalize/assets/60364134/167a7cbb-8346-44ac-9428-5f963ada54c2 height="16">PyTorch Lightning](https://lightning.ai/docs/pytorch/stable/) was used to implement the training and testing behavior.
 In the various `base_[experiment].py` files, the lightning-based abstractions for the different experiments are contained.
 These modules are used to specify training and testing behavior.
 
-Assuming data is available, conducting an experiment can be done using the `train.py` file with a pointer to a configuration file in an environment with the necessary libraries installed, e.g.:
+Assuming data is available, running an experiment can be done using the `train.py` file with a pointer to a configuration file in an environment with the necessary libraries installed, e.g.:
 ```bash
 python train.py --config "spring.json"
 ```
@@ -174,9 +174,9 @@ For the sequential classification tasks, [MNIST](http://yann.lecun.com/exdb/mnis
 The download and preprocessing of the datasets are handled through the provided code.
 
 <p align="center">
-  <img height="200" src="img/mnist_samples.png" style="margin-right: 50px;"> <!-- Added margin-right -->
-    <img height="200" src="img/pmnist_samples.png" style="margin-right: 50px;"> <!-- Added margin-right -->
-  <img height="200" src="img/cifar10_samples.png">
+  <img height="200" src=https://github.com/westny/neural-stability/assets/60364134/17c65e0d-bda2-42ca-b0bf-f8b1285bb67d style="margin-right: 50px;"> <!-- Added margin-right -->
+    <img height="200" src=https://github.com/westny/neural-stability/assets/60364134/ea1494c3-10d0-457a-bbd5-ae591c38f1ff style="margin-right: 50px;"> <!-- Added margin-right -->
+  <img height="200" src=https://github.com/westny/neural-stability/assets/60364134/87fec50c-9b4a-4e0f-b71f-aff4163cad2e>
   <br>
   <em>The leftmost figure showcases sample data from the MNIST dataset, the central figure presents samples from the permuted MNIST dataset, and the rightmost figure depicts sample data from the CIFAR-10 dataset.</em>
 </p>
@@ -194,9 +194,9 @@ python tf_converter_hdf5.py --dataset "spring"
 A word of caution, the final datasets are quite large (several gigabytes) as opposed to the original `.tfrecord` files, but we found that these worked best for our purposes.
 
 <p align="center">
-  <img width="500" src="img/latent_dyn.png">
+  <img width="500" src=https://github.com/westny/neural-stability/assets/60364134/5ab2d0fb-04ce-4369-891b-6a994182837a>
   <br>
-  <em>The figure provides a visual representation of the four datasets introduced by Botev et al., 2021 that were used in the paper: the Spring-mass system (Mass Spring), the Double Pendulum, Molecular Dynamics (16 particles), and the 3D Room (comprised of MuJoCo scenes). Notably, the Spring-mass system is depicted in grey scale solely for visual clarity, to distinguish it more easily from the other datasets presented.</em>
+  <em>The figure provides a visual representation of the four datasets introduced by Botev et al., 2021 that was used in the paper: the Spring-mass system (Mass Spring), the Double Pendulum, Molecular Dynamics (16 particles), and the 3D Room (comprised of MuJoCo scenes). Notably, the Spring-mass system is depicted in grey scale solely for visual clarity, to distinguish it more easily from the other datasets presented.</em>
 </p>
 
 ## Multivariate Time-Series Forecasting
@@ -207,11 +207,10 @@ As these datasets are quite small compared to the other datasets used in the pap
 For the combustion engine dataset, we used the _no-fault_ data from the [LiU-ICE Industrial Fault Diagnosis Benchmark](https://vehsys.gitlab-pages.liu.se/diagnostic_competition/) available at [[download link]](https://vehsys.gitlab-pages.liu.se/diagnostic_competition/competition/training_data/trainingdata.zip).
 The model is tasked with predicting the intercooler pressure using the other available measurements as inputs (except temperature).
 Upon execution, the code will download the dataset and preprocess it by default.
-The complete dataset is quite small (a few MBs), and the preprocessing very quick.
 
 <p align="center">
-  <img height="250" src="img/schematic.png" style="margin-right: 20px;"> <!-- Added margin-right -->
-  <img height="250" src="img/engine_test_bench.jpg">
+  <img height="250" src=https://github.com/westny/neural-stability/assets/60364134/33ae2cd4-56f5-434b-a97c-9e5d8ed3ccce style="margin-right: 20px;"> <!-- Added margin-right -->
+  <img height="250" src=https://github.com/westny/neural-stability/assets/60364134/8ba77fdb-235b-4cc5-a8d1-b3b69f94bc1a>
   <br>
   <em>The figure on the left depicts the schematic of the air path through the engine (test bench shown on the right).</em>
 </p>
@@ -225,22 +224,22 @@ The measurements belonging to the final tag (chest) are used as the ground truth
 The data are available in `.txt` format and is preprocessed using the provided code. 
 The use of the activity dataset was inspired by the work of [Rubanova et al., 2019](https://arxiv.org/abs/1907.03907).
 <p align="center">
-  <img width="600" src="img/activity.png">
+  <img width="600" src=https://github.com/westny/neural-stability/assets/60364134/38bcb856-812b-4755-8597-927868352ad0>
   <br>
   <em>Visualization of the data provided in the Human Activity dataset for subject A01.</em>
 </p>
 
 ### Air Quality
 The Air Quality dataset is available through the [UCI Machine Learning Repository](https://archive.ics.uci.edu/dataset/360/air+quality).
-It contains the response of a gas multisensor device deployed on the field in an Italian city. Hourly responses averages are recorded along with gas concentration references from a certified analyzer.
+It contains the response of a gas multisensor device deployed on the field in an Italian city. Hourly response averages are recorded along with gas concentration references from a certified analyzer.
 The task associated with this dataset is a little different from the other two.
 Taking in the measurements of the gas multisensor device, the model is tasked with predicting the gas concentrations references from the certified analyzer.
 For simplicity, we remove Non-Metanic HydroCarbons (NMHC(GT)) from the dataset as it contains a lot of missing values.
 For the remaining features, we use linear interpolation to fill in the missing values.
-The data are available in `.csv` and `.xlxs` format (we use `.xlxs` ) and is preprocessed using the provided code.
+The data are available in `.csv` and `.xlxs` format (we use `.xlxs` ) and are preprocessed using the provided code.
 
 <p align="center">
-  <img width="700" src="img/air_quality.png">
+  <img width="700" src=https://github.com/westny/neural-stability/assets/60364134/9ac34889-a2b0-4417-ab8a-7a9a200a29c4>
   <br>
   <em> Visualization of the data provided in the Air Quality dataset.</em>
 </p>
