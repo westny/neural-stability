@@ -1,4 +1,19 @@
+# Copyright 2024, Theodor Westny. All rights reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 import warnings
+from typing import Optional, Any
 import torch
 import torch.nn as nn
 from torch import func
@@ -15,34 +30,46 @@ solver_orders = {"euler": 1,
 
 
 class ParamNet(nn.Module):
-    def __init__(self, n_states):
+    def __init__(self, n_states: int) -> None:
         super().__init__()
         self.a = nn.Parameter(torch.zeros(n_states, n_states).uniform_(-1e-1, 1e-1), requires_grad=True)
         self.b = nn.Parameter(torch.ones(n_states, n_states) * 5, requires_grad=False)
 
-    def forward(self, x):
+    def forward(self,
+                x: torch.Tensor
+                ) -> torch.Tensor:
         return x @ self.a + self.b
 
 
 class LinearNet(nn.Module):
-    def __init__(self, n_states, n_inputs=0, perturb_val=1.0):
+    def __init__(self,
+                 n_states: int,
+                 n_inputs: int = 0,
+                 perturb_val: float = 1.0
+                 ) -> None:
         super().__init__()
         self.A = nn.Parameter(torch.zeros(n_states, n_states), requires_grad=True)
         self.B = nn.Parameter(torch.zeros(n_inputs, n_states), requires_grad=(n_inputs > 0))
         self.controlled = (n_inputs > 0)
         self.reset_parameters(n_states, n_inputs, perturb_val)
 
-    def reset_parameters(self, n_states, n_inputs, perturb_val=1.0):
+    def reset_parameters(self,
+                         n_states: int,
+                         n_inputs: int,
+                         perturb_val: float = 1.0
+                         ) -> None:
         from math import sqrt
         std = 1 / sqrt(n_states) * perturb_val
         nn.init.uniform_(self.A.data, -std, std)
         if n_inputs > 0:
             nn.init.uniform_(self.B.data, -std, std)
 
-    def get_poles(self):
+    def get_poles(self) -> torch.Tensor:
         return torch.linalg.eigvals(self.A).detach()
 
-    def forward(self, X):
+    def forward(self,
+                X: tuple[torch.Tensor, torch.Tensor]
+                ) -> torch.Tensor:
         x, u = X
         dx = x @ self.A + u @ self.B
         return dx
@@ -61,7 +88,8 @@ class NonLinearNet(nn.Module):
                  complex_poles: bool = False,
                  exclusion_order: int = 0,
                  perturb_val: float = 1.0,
-                 activation: str = "elu"):
+                 activation: str = "elu"
+                 ) -> None:
         super().__init__()
 
         self.controlled = (n_inputs > 0)
@@ -73,7 +101,11 @@ class NonLinearNet(nn.Module):
         else:
             self._reset_parameters_basic(n_states, n_inputs, perturb_val)
 
-    def _reset_parameters_basic(self, n_states, n_inputs, perturb_val=1.0):
+    def _reset_parameters_basic(self,
+                                n_states: int,
+                                n_inputs: int,
+                                perturb_val: float = 1.0
+                                ) -> None:
         from math import sqrt
         fan_in = n_states + n_inputs
         for p in self.parameters():
@@ -82,16 +114,32 @@ class NonLinearNet(nn.Module):
             std = 1 / sqrt(fan_in) * perturb_val
             nn.init.uniform_(p, -std, std)
 
-    def _reset_parameters(self, n_states, n_inputs, step_size=1.0, solver_order=1,
-                          use_imag=False, exclusion_order=0):
+    def _reset_parameters(self,
+                          n_states: int,
+                          n_inputs: int,
+                          step_size: float = 1.0,
+                          solver_order: int = 1,
+                          use_imag: bool = False,
+                          exclusion_order: int = 0
+                          ) -> torch.Tensor:
         poles = init_strategy(self.f, n_states, n_inputs, step_size, solver_order,
                               use_imag, exclusion_order=exclusion_order)
         return poles
 
     @staticmethod
-    def _create_net(n_states, n_inputs, n_hidden, n_layers, activation="elu"):
-        def block(in_feat, out_feat, nonlinearity="elu", normalize=False, dropout=0.0):
-            layers = [nn.Linear(in_feat, out_feat)]
+    def _create_net(n_states: int,
+                    n_inputs: int,
+                    n_hidden: int,
+                    n_layers: int,
+                    activation: str = "elu"
+                    ) -> nn.Sequential:
+        def block(in_feat: int,
+                  out_feat: int,
+                  nonlinearity: str = "elu",
+                  normalize: bool = False,
+                  dropout: float = 0.0
+                  ) -> list:
+            layers: list[nn.Module] = [nn.Linear(in_feat, out_feat)]
             if normalize:
                 layers.append(nn.LayerNorm(out_feat))
             if dropout:
@@ -138,7 +186,9 @@ class NonLinearNet(nn.Module):
 
         return net
 
-    def forward(self, X):
+    def forward(self,
+                X: tuple[torch.Tensor, torch.Tensor]
+                ) -> torch.Tensor:
         x, u = X
         if self.controlled:
             x = torch.cat((x, u), dim=-1)
@@ -146,11 +196,12 @@ class NonLinearNet(nn.Module):
 
 
 class NeuralODE(nn.Module):
-    _solver = 'euler'
-    _h = 0.01
-    _opts = {}
-    _atol = 1e-9
-    _rtol = 1e-7
+    _solver: str = 'euler'
+    _h: float = 0.01
+    _opts: dict[str, Any] = {}
+    _atol: float = 1e-9
+    _rtol: float = 1e-7
+    f: LinearNet | NonLinearNet
 
     def __init__(self,
                  n_states: int,
@@ -163,7 +214,8 @@ class NeuralODE(nn.Module):
                  linear: bool = False,
                  stability_init: bool = False,
                  complex_poles: bool = False,
-                 activation: str = "elu"):
+                 activation: str = "elu"
+                 ) -> None:
         super().__init__()
         self.n_states = n_states
         self.n_inputs = n_inputs
@@ -184,31 +236,31 @@ class NeuralODE(nn.Module):
                                   activation=activation)
 
     @property
-    def solver(self):
+    def solver(self) -> str:
         return self._solver
 
     @solver.setter
-    def solver(self, method):
+    def solver(self, method: str) -> None:
         assert method in ('euler', 'midpoint', 'rk3', 'rk4', 'adaptive_heun', 'dopri5')
         self._solver = method
         if method in ('adaptive_heun', 'dopri5'):
             self._opts = {}
 
     @property
-    def opts(self):
+    def opts(self) -> dict:
         return self._opts
 
     @opts.setter
-    def opts(self, options):
+    def opts(self, options: dict) -> None:
         assert options is dict
         self._opts = options
 
     @property
-    def step_size(self):
+    def step_size(self) -> float:
         return self._h
 
     @step_size.setter
-    def step_size(self, h):
+    def step_size(self, h: float) -> None:
         self._h = h
         if self._solver in ('euler', 'midpoint', 'rk3', 'rk4'):
             self._opts = {'step_size': self._h}
@@ -216,32 +268,41 @@ class NeuralODE(nn.Module):
             self._opts = {}
 
     @property
-    def atol(self):
+    def atol(self) -> float:
         return self._atol
 
     @atol.setter
-    def atol(self, atol):
+    def atol(self, atol: float) -> None:
         self._atol = atol
 
     @property
-    def rtol(self):
+    def rtol(self) -> float:
         return self._rtol
 
     @rtol.setter
-    def rtol(self, rtol):
+    def rtol(self, rtol: float) -> None:
         self._rtol = rtol
 
-    def model_update(self, t, X):
+    def model_update(self,
+                     t: torch.Tensor,
+                     X: tuple[torch.Tensor, torch.Tensor]
+                     ) -> tuple[torch.Tensor, torch.Tensor]:
         # Continuous function
         dx = self.f(X)
         du = torch.zeros_like(X[-1])
         return dx, du
 
-    def state_transition(self, x, u):
+    def state_transition(self,
+                         x: torch.Tensor,
+                         u: torch.Tensor
+                         ) -> torch.Tensor:
         return self.f((x, u))
 
     @torch.inference_mode(False)
-    def state_jacobian(self, X, inp=None):
+    def state_jacobian(self,
+                       X: torch.Tensor,
+                       inp: Optional[torch.Tensor] = None
+                       ) -> torch.Tensor:
         N, feat_dim = X.shape
         if inp is None:
             inp = torch.zeros_like(X)
@@ -250,7 +311,11 @@ class NeuralODE(nn.Module):
         F = jacobian.view(N, feat_dim, feat_dim)
         return F
 
-    def forward(self, t, x, u=None):
+    def forward(self,
+                t: torch.Tensor,
+                x: torch.Tensor,
+                u: Optional[torch.Tensor] = None
+                ) -> torch.Tensor:
         # Discrete update
         if u is None:
             u = torch.zeros_like(x)
@@ -261,14 +326,14 @@ class NeuralODE(nn.Module):
 
         return x_next
 
-    def l2_norm(self):
-        l2_norm = 0
+    def l2_norm(self) -> torch.Tensor:
+        l2_norm = torch.tensor(0.0)
         for W in self.parameters():
             l2_norm += torch.norm(W, 2).sum()
         return l2_norm
 
-    def l1_norm(self):
-        l1_norm = 0
+    def l1_norm(self) -> torch.Tensor:
+        l1_norm = torch.tensor(0.0)
         for W in self.parameters():
             l1_norm += torch.abs(W).sum()
         return l1_norm

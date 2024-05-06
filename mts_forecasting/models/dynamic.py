@@ -1,5 +1,20 @@
+# Copyright 2024, Theodor Westny. All rights reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+from typing import Any, Optional
+
 import torch
-import torch.nn as nn
+from torch import nn
 import torch.distributions as dist
 
 # NN block
@@ -9,7 +24,7 @@ from mts_forecasting.models.predictor import Predictor
 
 
 class MultiRegressor(nn.Module):
-    def __init__(self, config: dict):
+    def __init__(self, config: dict) -> None:
         super().__init__()
         self.n_inputs = config["n_inputs"]
         self.n_states = config["n_latent"]
@@ -29,7 +44,11 @@ class MultiRegressor(nn.Module):
                            stability_init=config["stability_init"],
                            activation=config["activation"])
 
-    def sample(self, u, variational=True, training=True):
+    def sample(self,
+               u: torch.Tensor,
+               variational: bool = True,
+               training: bool = True
+               ) -> tuple[torch.Tensor, Optional[dist.Distribution]]:
         if variational:
             if training:
                 out = self.g(u[:, :self.n_inputs])
@@ -46,7 +65,12 @@ class MultiRegressor(nn.Module):
             q = None
         return z0, q
 
-    def forward(self, u, T, dt=0.05, training=True):
+    def forward(self,
+                u: torch.Tensor,
+                T: int,
+                dt: float = 0.05,
+                training: bool = True
+                ) -> tuple[torch.Tensor, torch.Tensor, Optional[dist.Distribution]]:
         """
         N = batch size
 
@@ -61,6 +85,7 @@ class MultiRegressor(nn.Module):
         -------
         y_pred: torch.Tensor [T, N, n_outputs]
         states: torch.Tensor [T, N, n_states]
+        q: dist.Distribution
 
         """
 
@@ -78,8 +103,8 @@ class MultiRegressor(nn.Module):
             zt = zt[-1, :, :self.n_states]
             states.append(zt)
 
-        states = torch.stack(states, dim=0)
+        stacked_states = torch.stack(states, dim=0)
 
-        y_pred = self.h(states)
+        y_pred = self.h(stacked_states)
 
-        return y_pred, states, q
+        return y_pred, stacked_states, q

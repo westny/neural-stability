@@ -1,0 +1,23 @@
+name: neural_stability
+channels:
+  - conda-forge
+  - pytorch
+  - nvidia
+dependencies:
+  - python=3.11
+  - pip
+  - pytorch=2.2
+  - torchvision
+  - pytorch-cuda=12.1
+  - lightning
+  - wandb
+  - scikit-learn
+  - tqdm
+  - h5py
+  - matplotlib
+  - pandas
+  - openpyxl
+  - pyarrow
+  - pip:
+      - tfrecord
+      - mypy

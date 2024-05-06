@@ -1,10 +1,23 @@
+# Copyright 2024, Theodor Westny. All rights reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 import math
+import numpy as np
 import torch
 import torch.nn as nn
 from torch.nn.modules.container import Sequential
 from torch.nn.modules.linear import Linear
-import numpy as np
-from copy import copy
 
 
 def sample_poles(n_states: int,
@@ -12,7 +25,8 @@ def sample_poles(n_states: int,
                  solver_order: int = 1,
                  use_imag: bool = False,
                  eps: float = -1e-1,
-                 exclusion_order: int = 0) -> torch.tensor:
+                 exclusion_order: int = 0
+                 ) -> torch.Tensor:
     """
     Generate "n_states" number of poles using rejection sampling based
      on the stability region of the solver of order "solver_order"
@@ -52,8 +66,8 @@ def sample_poles(n_states: int,
     real_range = [-3.0, -0.1]
     im_range = [-3.0, 3.0]
 
-    x = []
-    y = []
+    x: list[float] = []
+    y: list[float] = []
 
     while len(x) < n_states:
         xi = (real_range[0] - real_range[-1]) * np.random.uniform() + real_range[-1]
@@ -66,15 +80,15 @@ def sample_poles(n_states: int,
             yi = 0.
 
         z = xi + 1j * yi
-        region = 1
+        region = 1.0 + 0.0j
         for p in range(1, solver_order + 1):
-            region += (z ** p) / np.math.factorial(p)
+            region += (z ** p) / math.factorial(p)
 
-        exclusion_region = 1
+        exclusion_region = 1.0 + 0.0j
         if exclusion_order > 0:
             assert exclusion_order < solver_order
             for p in range(1, exclusion_order + 1):
-                exclusion_region += (z ** p) / np.math.factorial(p)
+                exclusion_region += (z ** p) / math.factorial(p)
 
         if np.abs(region) < 1 + eps:
             if exclusion_order > 0:
@@ -87,28 +101,29 @@ def sample_poles(n_states: int,
                 x.append(xi)
                 y.append(yi)
 
-    x = torch.tensor(x) / step_size
-    y = torch.tensor(y) / step_size
+    x_tensor = torch.tensor(x) / step_size
+    y_tensor = torch.tensor(y) / step_size
 
     if use_imag:
         # If imaginary poles are included, we make sure they are conjugate pairs.
         # This is to make sure the reference "A"-matrix is real-valued.
-        poles = copy(x).cfloat()
+        poles = x_tensor.to(torch.complex64)
         j = 0
-        N = len(x)
+        N = len(x_tensor)
         if N % 2 != 0:
             N -= 1
 
         while j < N:
-            xj = x[j]
+            xj = x_tensor[j]
+            yj = y_tensor[j]
             try:
-                poles[j] = xj + 1j * y[j]
-                poles[j + 1] = xj - 1j * y[j]
+                poles[j] = xj + 1j * yj
+                poles[j + 1] = xj - 1j * yj
             except IndexError:
                 break
             j += 2
     else:
-        poles = x.cfloat()  # For consistency
+        poles = x_tensor.to(torch.complex64)  # For consistency
     return poles
 
 
@@ -116,7 +131,8 @@ def sample_exclusive_poles(n_states: int,
                            step_size: float = 0.1,
                            use_imag: bool = False,
                            eps: float = -1e-1,
-                           exclusion_order: int = 0) -> torch.tensor:
+                           exclusion_order: int = 0
+                           ) -> torch.Tensor:
     """
     Generate "n_states" number of poles using rejection sampling based
      on the stability region of the solver not to include (exclusion_order)
@@ -146,8 +162,8 @@ def sample_exclusive_poles(n_states: int,
     real_range = [-3.0, -0.1]
     im_range = [-3.0, 3.0]
 
-    x = []
-    y = []
+    x: list[float] = []
+    y: list[float] = []
 
     while len(x) < n_states:
         xi = (real_range[0] - real_range[-1]) * np.random.uniform() + real_range[-1]
@@ -155,9 +171,9 @@ def sample_exclusive_poles(n_states: int,
 
         z = xi + 1j * yi
 
-        exclusion_region = 1
+        exclusion_region = 1.0 + 0.0j
         for p in range(1, exclusion_order + 1):
-            exclusion_region += (z ** p) / np.math.factorial(p)
+            exclusion_region += (z ** p) / math.factorial(p)
 
         if np.abs(exclusion_region) < 1 - eps:
             continue
@@ -165,33 +181,35 @@ def sample_exclusive_poles(n_states: int,
             x.append(xi)
             y.append(yi)
 
-    x = torch.tensor(x) / step_size
-    y = torch.tensor(y) / step_size
+    x_tensor = torch.tensor(x) / step_size
+    y_tensor = torch.tensor(y) / step_size
 
     if use_imag:
         # If imaginary poles are included, we make sure they are conjugate pairs.
         # This is to make sure the reference "A"-matrix is real-valued.
-        poles = copy(x).cfloat()
+        poles = x_tensor.to(torch.complex64)
         j = 0
-        N = len(x)
+        N = len(x_tensor)
         if N % 2 != 0:
             N -= 1
 
         while j < N:
-            xj = x[j]
+            xj = x_tensor[j]
+            yj = y_tensor[j]
             try:
-                poles[j] = xj + 1j * y[j]
-                poles[j + 1] = xj - 1j * y[j]
+                poles[j] = xj + 1j * yj
+                poles[j + 1] = xj - 1j * yj
             except IndexError:
                 break
             j += 2
     else:
-        poles = x.cfloat()  # For consistency
+        poles = x_tensor.to(torch.complex64)  # For consistency
     return poles
 
 
 def ortho_matrix(n: int,
-                 use_imag: bool = False) -> torch.tensor:
+                 use_imag: bool = False
+                 ) -> torch.Tensor:
     """
     Generate a random orthogonal matrix, drawn from the O(n) Haar distribution
 
@@ -237,7 +255,8 @@ def init_strategy(seq_module: Sequential,
                   eps: float = -1e-2,
                   exclusion_order: int = 0,
                   bias_init: float = 1e-4,
-                  stochastic_inp: bool = False) -> torch.tensor:
+                  stochastic_inp: bool = False
+                  ) -> torch.Tensor:
     """
     Initialization strategy for the given sequential module.
 
@@ -351,7 +370,7 @@ def init_strategy(seq_module: Sequential,
 
             cn[:n_states, :n_states] = A
             if ji == 0:
-                bound = A.diagonal().abs().mean()
+                bound = A.diagonal().abs().mean().item()
                 # bound = 1 / math.sqrt(past)
                 input_init = torch.rand(n_inputs, n_states).uniform_(-bound, bound)
 

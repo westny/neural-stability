@@ -1,7 +1,24 @@
+# Copyright 2024, Theodor Westny. All rights reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 import torch
 
 
-def pixel_accuracy(pred, target, threshold=0.025):
+def pixel_accuracy(pred: torch.Tensor,
+                   target: torch.Tensor,
+                   threshold: float = 0.025
+                   ) -> float:
     """
     Compute pixel accuracy for image regression tasks with temporal dimension.
 
@@ -28,7 +45,10 @@ def pixel_accuracy(pred, target, threshold=0.025):
     return accuracy.item()
 
 
-def weighted_pixel_accuracy(pred, target, threshold=0.025):
+def weighted_pixel_accuracy(pred: torch.Tensor,
+                            target: torch.Tensor,
+                            threshold: float = 0.025
+                            ) -> float:
     """
     Compute weighted pixel accuracy, dynamically adjusting for black pixel prevalence.
 
@@ -66,7 +86,9 @@ def weighted_pixel_accuracy(pred, target, threshold=0.025):
     return accuracy.item()
 
 
-def performance_decay(pred, target):
+def performance_decay(pred: torch.Tensor,
+                      target: torch.Tensor
+                      ) -> float:
     """
     Compute the performance decay for a sequence of predicted images.
 
@@ -91,7 +113,10 @@ def performance_decay(pred, target):
     return k.item()
 
 
-def valid_prediction_time(pred, target, threshold=0.025):
+def valid_prediction_time(pred: torch.Tensor,
+                          target: torch.Tensor,
+                          threshold: float = 0.025
+                          ) -> float:
     """
     Compute the smallest time steps where the MSE is above a threshold.
 
@@ -120,4 +145,4 @@ def valid_prediction_time(pred, target, threshold=0.025):
     # Average of these times:
     avg_time = time.float().mean() / pred.shape[1]
 
-    return avg_time
+    return avg_time.item()

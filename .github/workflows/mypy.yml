@@ -1,0 +1,28 @@
+name: Linting
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+
+  build:
+    runs-on: ubuntu-22.04
+    defaults:
+      run:
+        shell: bash -el {0}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: conda-incubator/setup-miniconda@v3
+        with:
+          activate-environment: neural_stability
+          environment-file: container/environment.yml
+          python-version: 3.11
+          auto-activate-base: false
+
+      - name: Run mypy
+        run: |
+            python -m pip install mypy
+            mypy .

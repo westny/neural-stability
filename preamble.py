@@ -1,21 +1,25 @@
-import os
-import time
+# Copyright 2024, Theodor Westny. All rights reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+
 import json
-import torch
-import warnings
 import importlib
+from typing import Callable
 from pathlib import Path
 
-from lightning.pytorch import Trainer, seed_everything
-from lightning.pytorch.callbacks import ModelCheckpoint
-from lightning.pytorch.loggers import WandbLogger
 
-torch.set_float32_matmul_precision('medium')
-warnings.filterwarnings("ignore", ".*Consider increasing the value of the `num_workers` argument*")
-warnings.filterwarnings("ignore", ".*Checkpoint directory*")
-
-
-def load_config(config):
+def load_config(config: str) -> dict:
     # check if file contains ".json" extension
     if not config.endswith(".json"):
         config += ".json"
@@ -30,20 +34,20 @@ def load_config(config):
     files = [f for d in subdirs for f in d.iterdir() if f.is_file()]
 
     # check if config is any of the files
-    if not any([config in f.name for f in files]):
+    if not any(config in f.name for f in files):
         raise FileNotFoundError(f"Config file {config} not found.")
-    else:
-        config = [f for f in files if config in f.name][0]
 
-    with open(config, 'r') as openfile:
+    config = [str(f) for f in files if config in f.name][0]
+
+    with open(config, 'r', encoding='utf-8') as openfile:
         conf = json.load(openfile)
     return conf
 
 
-def import_module(module_name):
+def import_module(module_name: str) -> object:
     return importlib.import_module(module_name)
 
 
-def import_from_module(module_name, class_name):
+def import_from_module(module_name: str, class_name: str) -> Callable:
     module = import_module(module_name)
     return getattr(module, class_name)

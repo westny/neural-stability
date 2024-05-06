@@ -1,12 +1,26 @@
+# Copyright 2024, Theodor Westny. All rights reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 import torch
 import numpy as np
 import lightning.pytorch as pl
 
-from argparse import ArgumentParser
+from argparse import Namespace
 from torch.utils.data import DataLoader
 from sklearn.model_selection import train_test_split
 from mts_forecasting.dataset import MTSDataset
-from mts_forecasting.process_engine import process_data
+from mts_forecasting.process_engine import process_engine_data
 
 
 class LitDataModule(pl.LightningDataModule):
@@ -15,7 +29,10 @@ class LitDataModule(pl.LightningDataModule):
     test_inp = None
     test_trg = None
 
-    def __init__(self, args: ArgumentParser, config: dict):
+    def __init__(self,
+                 args: Namespace,
+                 config: dict
+                 ) -> None:
         super().__init__()
         self.seed = config["data_seed"]
         self.batch_size = config["batch_size"]
@@ -23,14 +40,14 @@ class LitDataModule(pl.LightningDataModule):
         self.seq_len = config["sequence_len"]
         self.sample_time = config["sample_time"]
 
-        self.data, self.residual = process_data(root=config["root"], download=True)
+        self.data, self.residual = process_engine_data(root=config["root"], download=True)
         self.train_test_split()
 
         self.n_workers = args.n_workers
         self.pin_memory = args.pin_memory
         self.persistent = args.persistent_workers
 
-    def train_test_split(self):
+    def train_test_split(self) -> None:
         inp_cols = self.residual.measurements
         inp_indices = [i for i, c in enumerate(self.data.columns) if c in inp_cols]
 
@@ -47,7 +64,13 @@ class LitDataModule(pl.LightningDataModule):
         self.test_trg = processed_data['test_target']
 
     @staticmethod
-    def process_data(data, l, n, trg_cols_indices, inp_cols_indices, seed=0):
+    def process_data(data: np.ndarray,
+                     l: int,
+                     n: int,
+                     trg_cols_indices: list[int],
+                     inp_cols_indices: list[int],
+                     seed: int = 0
+                     ) -> dict:
         # Step 1: Split data into l-length segments
         segments = [data[i:i + l] for i in range(0, len(data), l) if i + l <= len(data)]
 
@@ -92,7 +115,7 @@ class LitDataModule(pl.LightningDataModule):
             'test_target': test_target_tensor
         }
 
-    def train_dataloader(self):
+    def train_dataloader(self) -> DataLoader:
         dataset = MTSDataset(self.train_inp, self.train_trg)
         return DataLoader(dataset,
                           batch_size=self.batch_size,
@@ -102,7 +125,7 @@ class LitDataModule(pl.LightningDataModule):
                           persistent_workers=self.persistent,
                           collate_fn=MTSDataset.collate_fn)
 
-    def val_dataloader(self):
+    def val_dataloader(self) -> DataLoader:
         dataset = MTSDataset(self.test_inp, self.test_trg)
         return DataLoader(dataset,
                           batch_size=self.batch_size,
@@ -112,7 +135,7 @@ class LitDataModule(pl.LightningDataModule):
                           persistent_workers=self.persistent,
                           collate_fn=MTSDataset.collate_fn)
 
-    def test_dataloader(self):
+    def test_dataloader(self) -> DataLoader:
         dataset = MTSDataset(self.test_inp, self.test_trg)
         return DataLoader(dataset,
                           batch_size=self.batch_size,
@@ -121,4 +144,3 @@ class LitDataModule(pl.LightningDataModule):
                           pin_memory=self.pin_memory,
                           persistent_workers=self.persistent,
                           collate_fn=MTSDataset.collate_fn)
-

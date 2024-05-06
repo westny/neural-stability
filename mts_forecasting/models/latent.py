@@ -1,3 +1,18 @@
+# Copyright 2024, Theodor Westny. All rights reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+import torch
 import torch.nn as nn
 
 
@@ -6,13 +21,16 @@ class Latent(nn.Module):
                  n_inputs: int,
                  n_states: int,
                  n_hidden: int,
-                 n_layers: int):
+                 n_layers: int) -> None:
         super().__init__()
 
         self.g = self.network(n_inputs, n_states, n_hidden, n_layers)
 
     @staticmethod
-    def network(n_inputs, n_states, n_hidden, n_layers):
+    def network(n_inputs: int,
+                n_states: int,
+                n_hidden: int,
+                n_layers: int) -> nn.Sequential:
         def block(in_feat, out_feat, normalize=True, dropout=0.0):
             layers = [nn.Linear(in_feat, out_feat)]
             if normalize:
@@ -34,5 +52,5 @@ class Latent(nn.Module):
 
         return net
 
-    def forward(self, x):
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
         return self.g(x)

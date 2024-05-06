@@ -1,3 +1,17 @@
+# Copyright 2024, Theodor Westny. All rights reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 import torch
 import torch.nn as nn
 import lightning.pytorch as pl
@@ -5,8 +19,9 @@ from torch.nn import functional as F
 
 
 class LitModel(pl.LightningModule):
-    def __init__(self, model: nn.Module,
-                 config: dict):
+    def __init__(self,
+                 model: nn.Module,
+                 config: dict) -> None:
         super().__init__()
         self.model = model
         self.epochs = config["epochs"]
@@ -18,7 +33,10 @@ class LitModel(pl.LightningModule):
     def forward(self, *args, **kwargs) -> None:
         pass
 
-    def training_step(self, data, batch_idx) -> float:
+    def training_step(self,
+                      data: tuple[torch.Tensor, torch.Tensor],
+                      batch_idx: int
+                      ) -> torch.Tensor:
         inputs, target = data
         if inputs.dim() == 2:
             inputs.unsqueeze_(-1)
@@ -29,7 +47,7 @@ class LitModel(pl.LightningModule):
 
         inputs = self.model.encoder(inputs)
 
-        loss = 0
+        loss = torch.tensor(0., device=self.device)
         scales = torch.linspace(0.1, 1, seq_len) ** 4
 
         for si in range(seq_len):
@@ -45,7 +63,10 @@ class LitModel(pl.LightningModule):
         self.log_dict(log_dict, on_step=True, on_epoch=True, prog_bar=True, batch_size=batch_size)
         return loss
 
-    def validation_step(self, data, batch_idx) -> float:
+    def validation_step(self,
+                        data: tuple[torch.Tensor, torch.Tensor],
+                        batch_idx: int
+                        ) -> torch.Tensor:
         inputs, target = data
         if inputs.dim() == 2:
             inputs.unsqueeze_(-1)
@@ -71,7 +92,9 @@ class LitModel(pl.LightningModule):
         self.log_dict(metrics, on_step=False, on_epoch=True, prog_bar=True, batch_size=batch_size)
         return loss
 
-    def configure_optimizers(self):
+    def configure_optimizers(self
+                             ) -> tuple[list[torch.optim.Optimizer],
+                                        list[torch.optim.lr_scheduler.LRScheduler]]:
         optimizer = torch.optim.Adam(self.parameters(), betas=(0.9, 0.999), lr=self.learning_rate)
         scheduler = torch.optim.lr_scheduler.LinearLR(optimizer, start_factor=1, end_factor=0.1,
                                                       total_iters=self.epochs)

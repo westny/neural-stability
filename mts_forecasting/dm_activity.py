@@ -1,10 +1,24 @@
+# Copyright 2024, Theodor Westny. All rights reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 import os
 import torch
 import numpy as np
 import pandas as pd
 import lightning.pytorch as pl
 
-from argparse import ArgumentParser
+from argparse import Namespace
 from torch.utils.data import DataLoader
 from sklearn.model_selection import train_test_split
 from mts_forecasting.dataset import MTSDataset
@@ -12,7 +26,10 @@ from mts_forecasting.process_activity import process_activity_data
 
 
 class LitDataModule(pl.LightningDataModule):
-    def __init__(self, args: ArgumentParser, config: dict):
+    def __init__(self,
+                 args: Namespace,
+                 config: dict
+                 ) -> None:
         super().__init__()
         self.seed = config["data_seed"]
         self.batch_size = config["batch_size"]
@@ -38,7 +55,9 @@ class LitDataModule(pl.LightningDataModule):
         self.test = MTSDataset(processed_data["test_input"], processed_data["test_target"])
 
     @staticmethod
-    def process_data(df, seq_len, seed=0):
+    def process_data(df: pd.DataFrame,
+                     seq_len: int,
+                     seed: int = 0) -> dict:
         """
         Process the data with a specific RNG for the splitting process.
         """
@@ -68,7 +87,7 @@ class LitDataModule(pl.LightningDataModule):
             df_dropped = df.drop(columns=["record_id"])
 
             def get_single_segment(idx):
-                segment = df_dropped.loc[idx:idx+seq_len-1].to_numpy()
+                segment = df_dropped.loc[idx:idx + seq_len - 1].to_numpy()
                 return segment, len(segment)
 
             segments = [segment for idx in indices for segment, ln in [get_single_segment(idx)] if ln == seq_len]
@@ -91,7 +110,7 @@ class LitDataModule(pl.LightningDataModule):
             "test_target": test_out
         }
 
-    def train_dataloader(self):
+    def train_dataloader(self) -> DataLoader:
         return DataLoader(self.train,
                           shuffle=True,
                           collate_fn=MTSDataset.collate_fn,
@@ -101,7 +120,7 @@ class LitDataModule(pl.LightningDataModule):
                           persistent_workers=self.persistent_workers,
                           )
 
-    def val_dataloader(self):
+    def val_dataloader(self) -> DataLoader:
         return DataLoader(self.val if not self.evaluate else self.test,
                           collate_fn=MTSDataset.collate_fn,
                           batch_size=self.batch_size,
@@ -110,7 +129,7 @@ class LitDataModule(pl.LightningDataModule):
                           persistent_workers=self.persistent_workers
                           )
 
-    def test_dataloader(self):
+    def test_dataloader(self) -> DataLoader:
         return DataLoader(self.test,
                           collate_fn=MTSDataset.collate_fn,
                           batch_size=self.batch_size,

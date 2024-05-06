@@ -1,11 +1,24 @@
+# Copyright 2024, Theodor Westny. All rights reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 import os
-import torch
 import requests
 import zipfile
-import pandas as pd
-
 from typing import List
 from dataclasses import dataclass
+
+import pandas as pd
 
 url = "https://vehsys.gitlab-pages.liu.se/diagnostic_competition/competition/training_data/trainingdata.zip"
 
@@ -27,7 +40,10 @@ class Config:
     sensor: str
 
 
-def process_data(file="wltp_NF.csv", root="./data/engine", download=True, keep=-1):
+def process_engine_data(file: str = "wltp_NF.csv",
+                        root: str = "./data/engine",
+                        download: bool = True
+                        ) -> tuple[pd.DataFrame, Config]:
     # Check if data exists
     if not os.path.exists(root):
         os.makedirs(root)
@@ -53,7 +69,9 @@ def process_data(file="wltp_NF.csv", root="./data/engine", download=True, keep=-
     return df, config
 
 
-def download_file(url, filename):
+def download_file(url: str,
+                  filename: str
+                  ) -> None:
     with requests.get(url, stream=True) as r:
         r.raise_for_status()
         total_size_in_bytes = int(r.headers.get('content-length', 0))
@@ -73,7 +91,10 @@ def download_file(url, filename):
         print()
 
 
-def extract_specific_file(zip_filename, target_filename, extract_to_folder='.'):
+def extract_specific_file(zip_filename: str,
+                          target_filename: str,
+                          extract_to_folder: str = '.'
+                          ) -> None:
     with zipfile.ZipFile(zip_filename, 'r') as zip_ref:
         # List all file names in the zip
         file_names = zip_ref.namelist()
@@ -98,4 +119,4 @@ def extract_specific_file(zip_filename, target_filename, extract_to_folder='.'):
 
 
 if __name__ == '__main__':
-    y, _, conf = process_data()
+    y, conf = process_engine_data()

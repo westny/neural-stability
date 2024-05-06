@@ -1,10 +1,24 @@
+# Copyright 2024, Theodor Westny. All rights reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 import torch
 import matplotlib.pyplot as plt
 
 from tqdm import tqdm
 from torch.utils.data import DataLoader
 from lightning.pytorch import seed_everything
-from latent_dynamics.dm_latent import CustomHDF5Dataset
+from latent_dynamics.dataset import CustomHDF5Dataset
 
 
 if __name__ == "__main__":
@@ -18,7 +32,7 @@ if __name__ == "__main__":
     for name, seed in zip(["spring", "twoXpendulum", "mujoco", "molecules"], [42, 99, 2, 3]):
         seed_everything(seed)
         file_path = f"../data/{name}/test.hdf5"
-        ds = CustomHDF5Dataset(file_path, sampling_time=0.15)
+        ds = CustomHDF5Dataset(file_path, sample_time=0.15)
         dl = DataLoader(ds, batch_size=128, shuffle=True, num_workers=1)
 
         for batch in tqdm(dl):

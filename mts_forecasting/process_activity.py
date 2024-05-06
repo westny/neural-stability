@@ -1,11 +1,32 @@
+# Copyright 2024, Theodor Westny. All rights reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 import os
+from typing import Optional
+from tqdm import tqdm
+
 import numpy as np
 import pandas as pd
-from tqdm import tqdm
 from torchvision.datasets.utils import download_url
 
 
-def process_activity_data(root, url=None, tag_ids=None, label_dict=None, output_file="data.csv"):
+def process_activity_data(root: str,
+                          url: Optional[str] = None,
+                          tag_ids: Optional[list[str]] = None,
+                          label_dict: Optional[dict] = None,
+                          output_file: str = "data.csv"
+                          ) -> None:
     """
     Process the activity data from the given URL and save it to a CSV file.
 
@@ -46,7 +67,7 @@ def process_activity_data(root, url=None, tag_ids=None, label_dict=None, output_
     download_url(url, root, "data.txt", md5=None)
 
     # Initialize arrays for each tag
-    arrays = {tag_id: {"x": [], "y": [], "z": [], "t": [], "label": []} for tag_id in tag_ids}
+    arrays: dict = {tag_id: {"x": [], "y": [], "z": [], "t": [], "label": []} for tag_id in tag_ids}
     record_id = None
     dfs = []
 
@@ -71,7 +92,7 @@ def process_activity_data(root, url=None, tag_ids=None, label_dict=None, output_
 
                 # Find the index of the longest array
                 idx = np.argmax([len(arrays[tag_id]["x"]) for tag_id in tag_ids])
-                new_arrays = {tag_id: {"x": [], "y": [], "z": []} for tag_id in tag_ids}
+                new_arrays: dict = {tag_id: {"x": [], "y": [], "z": []} for tag_id in tag_ids}
 
                 # Process arrays
                 for i in range(len(arrays[tag_ids[idx]]["x"])):

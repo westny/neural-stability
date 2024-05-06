@@ -29,7 +29,7 @@
     "test_trg_len": 240,
     "sample_time": 0.1,
     "data_seed": 42,
-    "root": "data/",
+    "root": "data",
     "name": "twoXpendulum"
   },
 

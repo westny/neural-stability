@@ -1,0 +1,36 @@
+name: Apptainer CI
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+
+  build:
+
+    runs-on: ubuntu-22.04
+
+    steps:
+    - uses: actions/checkout@v4
+    - uses: eWaterCycle/setup-apptainer@v2
+      with:
+        apptainer-version: 1.1.2
+
+    - name: Clean disk space
+      run: |
+        sudo rm -rf /usr/share/dotnet
+        sudo rm -rf /opt/ghc
+        sudo rm -rf "/usr/local/share/boost"
+        sudo rm -rf "$AGENT_TOOLSDIRECTORY"
+        sudo apt-get clean
+
+    - name: Build the Apptainer image
+      run: |
+        cd container
+        apptainer build neural_stability.sif apptainer.def
+
+    - name: Run PyTorch Training Loop
+      run: |
+        apptainer run container/neural_stability.sif python train.py --config engine

@@ -1,14 +1,31 @@
+# Copyright 2024, Theodor Westny. All rights reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 import os
+from typing import Any, Callable
+
+import numpy as np
 import torch
 import torchvision
 import requests
 from tfrecord.torch.dataset import TFRecordDataset
-from configs import *
+from latent_dynamics.configs import *
 
 main_url = "https://storage.googleapis.com/dm-hamiltonian-dynamics-suite/"
 
 
-def download_file(url, filename):
+def download_file(url: str, filename: str) -> None:
     with requests.get(url, stream=True) as r:
         r.raise_for_status()
         total_size_in_bytes = int(r.headers.get('content-length', 0))
@@ -28,7 +45,8 @@ def download_file(url, filename):
         print()
 
 
-def switch(dataset, root="data"):
+def switch(dataset: str,
+           root: str = "data") -> tuple[str, str, dict]:
     if dataset == "spring":
         return (main_url + "toy_physics/mass_spring/",
                 f"{root}/toy_physics_mass_spring",
@@ -57,7 +75,10 @@ def switch(dataset, root="data"):
         raise NotImplementedError
 
 
-def tfrecord_generator(tfrecord_path, start_idx, end_idx, transform_fn):
+def tfrecord_generator(tfrecord_path: str,
+                       start_idx: int,
+                       end_idx: int,
+                       transform_fn: Callable) -> Any:
     dataset = TFRecordDataset(tfrecord_path, None)
     for idx, data in enumerate(dataset):
         if idx < start_idx:
@@ -69,7 +90,7 @@ def tfrecord_generator(tfrecord_path, start_idx, end_idx, transform_fn):
             yield data
 
 
-def collate_fn_img(batch, conf):
+def collate_fn_img(batch: dict, conf: dict) -> np.ndarray:
     dtype, shape = conf["image"]
     value = batch["image"]
     uint8_tensor = torch.tensor([i for i in value], dtype=torch.uint8)
@@ -79,7 +100,7 @@ def collate_fn_img(batch, conf):
     return data
 
 
-def collate_fn_state(batch, conf):
+def collate_fn_state(batch: dict, conf: dict) -> torch.Tensor:
     dtype, shape = conf["x"]
     value = batch["x"]
     data = torch.tensor(value).view(torch.float64).float()
@@ -87,7 +108,7 @@ def collate_fn_state(batch, conf):
     return data
 
 
-def collate_fn_conv(batch, conf):
+def collate_fn_conv(batch: dict, conf: dict) -> tuple[torch.Tensor, np.ndarray]:
     trajectory = collate_fn_state(batch, conf)
     images = collate_fn_img(batch, conf)
     return trajectory, images

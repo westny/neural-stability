@@ -1,5 +1,18 @@
+# Copyright 2024, Theodor Westny. All rights reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 import os
-import torch
 import requests
 import zipfile
 import numpy as np
@@ -8,7 +21,10 @@ import pandas as pd
 url = "https://archive.ics.uci.edu/static/public/360/air+quality.zip"
 
 
-def process_data(file="AirQualityUCI.xlsx", root="./data/quality", download=True, keep=-1):
+def process_quality_data(file: str = "AirQualityUCI.xlsx",
+                         root: str = "./data/quality",
+                         download: bool = True
+                         ) -> pd.DataFrame:
     # Check if data exists
     if not os.path.exists(root):
         os.makedirs(root)
@@ -31,7 +47,8 @@ def process_data(file="AirQualityUCI.xlsx", root="./data/quality", download=True
     return df
 
 
-def download_file(url, filename):
+def download_file(url: str,
+                  filename: str) -> None:
     response = requests.get(url)
 
     if response.status_code == 200:
@@ -41,7 +58,10 @@ def download_file(url, filename):
         print("Failed to download the file.")
 
 
-def extract_specific_file(zip_filename, target_filename, extract_to_folder='.'):
+def extract_specific_file(zip_filename: str,
+                          target_filename: str,
+                          extract_to_folder: str = '.'
+                          ) -> None:
     with zipfile.ZipFile(zip_filename, 'r') as zip_ref:
         # List all file names in the zip
         file_names = zip_ref.namelist()
@@ -62,7 +82,7 @@ def extract_specific_file(zip_filename, target_filename, extract_to_folder='.'):
             print(f"{target_filename} not found in the zip file.")
 
 
-def interpolate_missing_values(df):
+def interpolate_missing_values(df: pd.DataFrame) -> pd.DataFrame:
     """
     Interpolates missing values (marked as -200) in a pandas DataFrame.
 
@@ -90,5 +110,5 @@ def interpolate_missing_values(df):
 
 
 if __name__ == '__main__':
-    df = process_data()
+    df = process_quality_data()
     print(df.head())

@@ -1,10 +1,26 @@
+# Copyright 2024, Theodor Westny. All rights reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 from lightning.pytorch import LightningDataModule
 from torch.utils.data import Dataset, DataLoader
 from teacher_student.reference_system import *
 
 
 class LitDataModule(LightningDataModule):
-    def __init__(self, args, config: dict):
+    m: MultiStateTeacherNetwork | LinearMultiStateTeacherNetwork
+
+    def __init__(self, args, config: dict) -> None:
         super().__init__()
         self.batch_size = config['batch_size']
         self.seed = config['data_seed']

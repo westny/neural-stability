@@ -1,15 +1,26 @@
-import os
-import torch
+# Copyright 2024, Theodor Westny. All rights reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 
+import torch
 import lightning.pytorch as pl
 import torchvision.transforms as transforms
 import torchvision.datasets as datasets
-
 from torch.utils.data import DataLoader
 
 
 class PermuteTransform:
-    def __init__(self):
+    def __init__(self) -> None:
         self.perm_idx = torch.randperm(28 * 28)
 
     def __call__(self, tensor):
@@ -18,7 +29,7 @@ class PermuteTransform:
 
 
 class LitDataModule(pl.LightningDataModule):
-    def __init__(self, args, config: dict):
+    def __init__(self, args, config: dict) -> None:
         super().__init__()
         root = config["root"]
         self.dataset = config["name"]
@@ -100,7 +111,7 @@ class LitDataModule(pl.LightningDataModule):
         else:
             raise NotImplementedError
 
-    def train_dataloader(self):
+    def train_dataloader(self) -> DataLoader:
         return DataLoader(self.train,
                           shuffle=True,
                           batch_size=self.batch_size,
@@ -108,14 +119,14 @@ class LitDataModule(pl.LightningDataModule):
                           pin_memory=self.pin_memory,
                           persistent_workers=self.persistent)
 
-    def val_dataloader(self):
+    def val_dataloader(self) -> DataLoader:
         return DataLoader(self.test,
                           batch_size=self.batch_size,
                           num_workers=self.n_workers,
                           pin_memory=self.pin_memory,
                           persistent_workers=self.persistent)
 
-    def test_dataloader(self):
+    def test_dataloader(self) -> DataLoader:
         return DataLoader(self.test,
                           batch_size=self.batch_size,
                           num_workers=self.n_workers,

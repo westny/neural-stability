@@ -1,5 +1,19 @@
-import torch.nn as nn
-from typing import Union, Tuple
+# Copyright 2024, Theodor Westny. All rights reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+import torch
+from torch import nn
 from models.neuralode import NeuralODE
 
 
@@ -9,17 +23,24 @@ class ConvBlock(nn.Module):
             in_channels: int = 1,
             out_channels: int = 128,
             n_blocks: int = 2,
-            kernel_size: Union[int, Tuple[int, int, int]] = 3,
-            stride: Union[int, Tuple[int, int, int]] = 1,
-            padding: Union[int, Tuple[int, int, int]] = 1,
+            kernel_size: int | tuple[int, int, int] = 3,
+            stride: int | tuple[int, int, int] = 1,
+            padding: int | tuple[int, int, int] = 1,
             dropout: float = 0.0
-    ):
+    ) -> None:
         super().__init__()
         self.depth = n_blocks
         self.net = self.block(in_channels, out_channels, n_blocks, kernel_size, stride, padding, dropout)
 
     @staticmethod
-    def block(in_channels, out_channels, n_blocks, kernel_size, stride, padding, dropout):
+    def block(in_channels: int,
+              out_channels: int,
+              n_blocks: int,
+              kernel_size: int | tuple[int, int, int],
+              stride: int | tuple[int, int, int],
+              padding: int | tuple[int, int, int],
+              dropout: float
+              ) -> nn.Sequential:
         layers = [nn.Conv3d(in_channels, out_channels, kernel_size, stride, padding),
                   nn.BatchNorm3d(out_channels),
                   nn.SiLU()]
@@ -30,7 +51,7 @@ class ConvBlock(nn.Module):
                        nn.Dropout(dropout)]
         return nn.Sequential(*layers)
 
-    def forward(self, x):
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
         out = self.net(x)
         return out
 
@@ -41,10 +62,10 @@ class ResBlock(nn.Module):
             in_channels: int = 128,
             out_channels: int = 128,
             n_blocks: int = 2,
-            kernel_size: Union[int, Tuple[int, int, int]] = 3,
-            stride: Union[int, Tuple[int, int, int]] = 1,
-            padding: Union[int, Tuple[int, int, int]] = 1
-    ):
+            kernel_size: int | tuple[int, int, int] = 3,
+            stride: int | tuple[int, int, int] = 1,
+            padding: int | tuple[int, int, int] = 1
+    ) -> None:
         super().__init__()
         self.depth = n_blocks
         self.net = nn.ModuleList([self.block(in_channels, out_channels, kernel_size, stride, padding)
@@ -52,13 +73,18 @@ class ResBlock(nn.Module):
         self.o = nn.SiLU()
 
     @staticmethod
-    def block(in_channels, out_channels, kernel_size, stride, padding):
+    def block(in_channels: int,
+              out_channels: int,
+              kernel_size: int | tuple[int, int, int],
+              stride: int | tuple[int, int, int],
+              padding: int | tuple[int, int, int]
+              ) -> nn.Sequential:
         layers = [nn.Conv3d(in_channels, out_channels, kernel_size, stride, padding),
                   nn.BatchNorm3d(out_channels),
                   nn.SiLU()]
         return nn.Sequential(*layers)
 
-    def forward(self, x):
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
         x_ = x
         for i in range(self.depth):
             x_ = self.net[i](x_)
@@ -75,7 +101,7 @@ class ConvEmbed(nn.Module):
             self,
             in_channels: int,
             out_channels: int,
-    ):
+    ) -> None:
         super().__init__()
 
         self.conv1 = nn.Sequential(
@@ -89,7 +115,7 @@ class ConvEmbed(nn.Module):
             nn.SiLU(),
         )
 
-    def forward(self, x):
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
         x1 = self.conv1(x)
         x2 = self.conv2(x1)
         out = x1 + x2
@@ -100,7 +126,8 @@ class DownNet(nn.Module):
     def __init__(self,
                  in_channels: int,
                  out_channels: int,
-                 dropout: float = 0.0):
+                 dropout: float = 0.0
+                 ) -> None:
         super().__init__()
 
         self.net = nn.Sequential(
@@ -109,7 +136,7 @@ class DownNet(nn.Module):
             nn.MaxPool3d(2),
         )
 
-    def forward(self, x):
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
         out = self.net(x)
         return out
 
@@ -118,7 +145,8 @@ class UpNet(nn.Module):
     def __init__(self,
                  in_channels: int,
                  out_channels: int,
-                 dropout: float = 0.0):
+                 dropout: float = 0.0
+                 ) -> None:
         super().__init__()
 
         self.net = nn.Sequential(
@@ -129,13 +157,15 @@ class UpNet(nn.Module):
                       stride=1, padding=(0, 1, 1), n_blocks=4, dropout=dropout),
         )
 
-    def forward(self, x):
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
         out = self.net(x)
         return out
 
 
 class LatentDynamics(nn.Module):
-    def __init__(self, config: dict):
+    def __init__(self,
+                 config: dict
+                 ) -> None:
         super().__init__()
         latent_dim = config["n_latent"]
         dp = config["dropout"]
@@ -180,7 +210,9 @@ class LatentDynamics(nn.Module):
             nn.ConvTranspose3d(latent_dim // 2, 3, kernel_size=(1, 3, 3), stride=1, padding=(0, 1, 1)),
         )
 
-    def forward(self, t, x):
+    def forward(self,
+                t: torch.Tensor,
+                x: torch.Tensor) -> torch.Tensor:
         # x.shape = (N, T_in, 3, 32, 32)
 
         x = x.transpose(1, 2)  # x.shape = (N, 3, T_in, 32, 32)
