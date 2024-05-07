@@ -12,6 +12,7 @@ ______________________________________________________________________
 [![Docker Status](https://github.com/westny/neural-stability/actions/workflows/docker-image.yml/badge.svg)](.github/workflows/docker-image.yml)
 [![Apptainer Status](https://github.com/westny/neural-stability/actions/workflows/apptainer-image.yml/badge.svg)](.github/workflows/apptainer-image.yml)
 [![Conda Status](https://github.com/westny/neural-stability/actions/workflows/conda.yml/badge.svg)](.github/workflows/conda.yml)
+[![Linting Status](https://github.com/westny/neural-stability/actions/workflows/mypy.yml/badge.svg)](.github/workflows/mypy.yml)
 
 </div>
 
