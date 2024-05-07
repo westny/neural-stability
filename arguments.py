@@ -44,9 +44,9 @@ parser.add_argument('--use-logger', type=str_to_bool, default=False,
 parser.add_argument('--use-cuda', type=str_to_bool, default=False,
                     const=True, nargs="?",
                     help='if cuda exists and should be used (default: False)')
-parser.add_argument('--store-model', type=str_to_bool, default=False,
+parser.add_argument('--store-model', type=str_to_bool, default=True,
                     const=True, nargs="?",
-                    help='if checkpoints should be stored (default: False)')
+                    help='if checkpoints should be stored (default: True)')
 parser.add_argument('--overwrite', type=str_to_bool, default=True,
                     const=True, nargs="?",
                     help='overwrite if model exists (default: True)')
