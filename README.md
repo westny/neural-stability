@@ -4,7 +4,7 @@
 
 ______________________________________________________________________
 
-[![paper](https://img.shields.io/badge/Paper-arXiv-8A2BE2.svg)](https://arxiv.org/abs/2311.15890)
+[![arXiv link](https://img.shields.io/static/v1?label=arXiv&message=SII&color=8A2BE2&logo=arxiv)](https://arxiv.org/abs/2311.15890)
 [![python](https://img.shields.io/badge/Python-3.11-blue.svg)](https://www.python.org/)
 [![pytorch](https://img.shields.io/badge/PyTorch-2.2-blue.svg)](https://pytorch.org/)
 [![license](https://img.shields.io/badge/License-Apache%202.0-2F2F2F.svg)](LICENSE)
